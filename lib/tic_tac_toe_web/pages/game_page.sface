@@ -1,0 +1,110 @@
+<div class="flex flex-row">
+  <div
+    class="m-5 flex flex-col gap-6 basis-1/6 items-center"
+    :if={not @spectator? and length(@game_state.spectators) > 0}
+  >
+    <div class="text-xl text-bold">
+      Spectators
+    </div>
+    <ul>
+      {#for spectator <- @game_state.spectators}
+        <li class="text-md">
+          {spectator.name}
+        </li>
+      {/for}
+    </ul>
+  </div>
+  <div class="m-5 flex flex-col basis-5/6 gap-16 w-fit items-start m-auto">
+    <div :if={@spectator?} class="mt-5 text-xl">
+      You are spectating this game.
+    </div>
+    <div class="flex flex-row gap-32 justify-center self-center">
+      {#for player <- @game_state.players}
+        <div class="flex flex-col gap-2 items-center justify-center">
+          <span class={"flex flex-col items-center #{case player.character do
+            "x" -> "bg-orange-500"
+            "o" -> "bg-lime-500"
+          end} text-slate-50 px-14 py-1 text-xl"}>
+            {player.name}
+            <span>
+              {player.character |> String.upcase()}
+            </span>
+          </span>
+        </div>
+      {/for}
+    </div>
+    <div class="w-fit p-12 bg-sky-500 flex flex-row self-center justify-center items-center">
+      <div class="grid grid-cols-3 gap-4">
+        {#for {square, position} <- Enum.with_index(@game_state.board)}
+          <div
+            phx-value-position={position}
+            phx-click={if @game_state.status == :playing and @player.character == @game_state.turn, do: "move", else: nil}
+            class="w-24 h-24 bg-slate-50"
+          >
+            {#if square == "o"}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-24 w-24"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <circle cx="12" cy="12" r="8" />
+              </svg>
+            {#elseif square == "x"}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-24 w-24"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="2"
+              >
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            {/if}
+          </div>
+        {/for}
+      </div>
+    </div>
+    <div class="self-center justify-center">
+      <div :if={@game_state.status == :playing and @game_state.turn == @player.character}>
+        <span class="text-xl">
+          Your Turn
+        </span>
+      </div>
+      <div :if={@game_state.status == :playing and @game_state.turn != @player.character}>
+        <span class="text-xl">
+          {Enum.find(@game_state.players, fn p -> p.character == @game_state.turn end).name}'s turn
+        </span>
+      </div>
+      {#if length(@game_state.players) == 2 and @game_state.status != :playing}
+        {#if @player.id == @game_state.lobby_leader.id}
+          <button
+            phx-click={if @game_state.status == :waiting, do: "start-game", else: "restart-game"}
+            class="px-12 py-4 relative inline-flex items-center justify-center p-0.5 mb-2 mr-2 overflow-hidden text-sm font-medium text-gray-900 rounded-lg group bg-gradient-to-br from-purple-600 to-blue-500 group-hover:from-purple-600 group-hover:to-blue-500 hover:text-white dark:text-white focus:ring-4 focus:outline-none focus:ring-blue-300 dark:focus:ring-blue-800"
+          >
+            {#if @game_state.status == :waiting}
+              Start Game
+            {#else}
+              Restart Game
+            {/if}
+          </button>
+        {#else}
+          <div class="text-xl">
+            Waiting for lobby leader {@game_state.lobby_leader.name} to start game.
+          </div>
+        {/if}
+      {#elseif length(@game_state.players) < 2}
+        <div class="text-xl">
+          Waiting for players.
+        </div>
+      {/if}
+    </div>
+  </div>
+  <div class="m-5 flex flex-col gap-6 basis-1/6 items-center text-xl">
+    <h3>Lobby ID</h3>
+    <h2>{@game_state.lobby_id}</h2>
+  </div>
+</div>
